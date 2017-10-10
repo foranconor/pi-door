@@ -1,0 +1,35 @@
+body {
+	background-color: lightblue;
+	
+}
+
+#door, #password {
+	text-align: center;
+	min-height: 400px;
+	max-width: 500px;
+	max-height: 400px;
+	margin: auto;
+	border-style: solid;
+	border-width: 4px;
+	border-radius: 4px;
+	padding: 20px;
+	font-size: 50px;
+	margin-bottom: 30px;
+	
+}
+
+#door {
+	background-color: red;
+	border-color: maroon;
+	color: white;
+}
+
+
+#password {
+	height: 60px;
+	border-color: darkblue;
+	background-color: lightblue;
+	outline: none;
+}
+
+
