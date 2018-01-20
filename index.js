@@ -2,6 +2,7 @@ const rpio = require('rpio');
 const express = require('express');
 const crypto = require('crypto-js');
 const bodyParser = require('body-parser');
+const child = require('child_process');
 const pin = 40;
 const key = "beka";
 const ttl = 1000;
@@ -11,10 +12,14 @@ var app = express();
 
 rpio.open(pin, rpio.OUTPUT, rpio.LOW);
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static('Web'));
 
-
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 app.get('/', function(req, res) { 
     res.sendFile(__dirname + '/Web/index.html');
@@ -29,7 +34,10 @@ app.get('/nonce', function(req, res) {
 });
 
 app.post('/door', function(req, res) {
+	console.log(req.body);
 	var k = req.body.key;
+	console.log(k);
+	console.log(table);
 	if (table.hasOwnProperty(k)) {
 		if (table[k] > new Date().getTime()) {
 			delete table[k];
