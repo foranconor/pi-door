@@ -4,6 +4,8 @@ const crypto = require('crypto-js');
 const bodyParser = require('body-parser');
 const child = require('child_process');
 const pin = 40;
+const openPin = 37;
+const closePin = 38;
 const key = "beka";
 const ttl = 1000;
 const push = 500;
@@ -11,14 +13,28 @@ let table = {};
 const app = express();
 
 rpio.open(pin, rpio.OUTPUT, rpio.LOW);
+rpio.open(openPin, rpio.INPUT, rpio.PULL_DOWN);
+rpio.open(closePin, rpio.INPUT, rpio.PULL_DOWN);
 
 app.use(bodyParser.json());
 app.use(express.static('Web'));
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept");
   next();
+});
+
+app.get('/state', (req, res) => {
+  const open = rpio.read(openPin);
+  const closed = rpio.read(closedPin);
+  let s = 'error';
+  if (!(open || closed)) s = 'moving';
+  else if (open) s = 'open';
+  else if (closed) s = 'closed';
+  res.send({ state: s });
 });
 
 app.get('/nonce', (req, res) => {
@@ -45,11 +61,11 @@ app.post('/door', (req, res) => {
 			delete table[k];
 			res.status(420).send();
 		}
-	} else res.status(420).send();	
+	} else res.status(420).send();
 });
 
-app.get('*', (req, res) => { 
+app.get('*', (req, res) => {
     res.sendFile(__dirname + '/Web/index.html');
 });
-	
+
 app.listen(8888);

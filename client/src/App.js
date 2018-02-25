@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import './App.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import { SHA3 } from 'crypto-js';
 
@@ -7,14 +6,14 @@ function Activated(props) {
   if (!props.act) {
     return null;
   } else return (
-    <div class="row pt-3">
-      <div class="col-2"></div>
-      <div class="alert alert-warning col-8">
-        <p class="lead">
+    <div className="row pt-3">
+      <div className="col-2"></div>
+      <div className="alert alert-warning col-8">
+        <p className="lead">
           Activated !!!
         </p>
       </div>
-      <div class="col-2"></div>
+      <div className="col-2"></div>
     </div>
   );
 }
@@ -24,26 +23,40 @@ function Failed(props) {
     return null;
   } else {
     return (
-      <div class="row pt-3">
-        <div class="col-2"></div>
-        <div class="alert alert-danger col-8">
-          <p class="lead">
+      <div className="row pt-3">
+        <div className="col-2"></div>
+        <div className="alert alert-danger col-8">
+          <p className="lead">
             Request failed!!
           </p>
         </div>
-        <div class="col-2"></div>
+        <div className="col-2"></div>
       </div>
     )
   }
 }
 
+function DoorState(props) {
+  return (
+    <div className="row pt-3">
+      <div className="col-2"></div>
+        <div className={'alert col-8 ' + props.kind}>
+          {props.message}
+        </div>
+      <div className="col-2"></div>
+    </div>
+  )
+}
+
 function Title(props) {
   return (
     <div>
-      <h3 class="display-3">Garage Door</h3>
+      <h3 className="display-3">Garage Door</h3>
     </div>
   );
 }
+
+const url = 'https://202.78.140.206/';
 
 class App extends Component {
 
@@ -56,25 +69,26 @@ class App extends Component {
 
   render() {
     return (
-      <div class="container text-center">
+      <div className="container text-center">
         <Title />
         <form onSubmit={this.activate}>
-          <div class="form-group">
+          <div className="form-group">
             <label>
               Password
               <input
                 type="password"
                 value={this.state.password}
                 onChange={this.passwordChanged}
-                class="form-control text-center"/>
+                className="form-control text-center"/>
             </label>
           </div>
-          <button type="submit" class="btn btn-lg btn-info">
+          <button type="submit" className="btn btn-lg btn-info">
             Activate
           </button>
         </form>
         <Activated act={this.state.activated} />
         <Failed fail={this.state.failed} />
+        <DoorState kind={this.state.kind} message={this.state.message} />
       </div>
     );
   }
@@ -82,7 +96,6 @@ class App extends Component {
   activate(event) {
     event.preventDefault();
     // request nonce from server
-    const url = 'http://192.168.1.3:8888/';
     fetch(url + 'nonce').then(nonceRes => {
       if (nonceRes.ok) {
         nonceRes.json().then(body => {
@@ -125,6 +138,52 @@ class App extends Component {
     localStorage.pwd = JSON.stringify(p);
   }
 
+  doorState() {
+    fetch(url + 'state').then(res => {
+      console.log(res);
+      if (res.ok) {
+        res.json().then(data => {
+          switch (data.state) {
+            case 'moving':
+              this.setState({
+                kind: 'alert-warning',
+                message: 'Moving'
+              });
+              break;
+            case 'open':
+              this.setState({
+                kind: 'alert-success',
+                message: 'Open'
+              });
+              break;
+            case 'closed':
+              this.setState({
+                kind: 'alert-danger',
+                message: 'Closed'
+              });
+              break;
+            default:
+              this.setState({
+                kind: 'alert-primary',
+                message: 'Sensor Error!!!'
+              });
+            break;
+          }
+        }).catch(e => {
+          this.setState({
+            kind: 'alert-info',
+            message: 'JSON Error!!!'
+          })
+        });
+      }
+    }).catch(e => {
+      this.setState({
+        kind: 'alert-info',
+        message: 'Network Error!!!'
+      })
+    });
+  }
+
   componentDidMount() {
     let p;
     try {
@@ -133,6 +192,7 @@ class App extends Component {
       p = '';
     }
     this.setState({ password: p.password });
+    this.doorState();
   }
 }
 
