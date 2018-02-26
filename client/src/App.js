@@ -2,40 +2,6 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import { SHA3 } from 'crypto-js';
 
-function Activated(props) {
-  if (!props.act) {
-    return null;
-  } else return (
-    <div className="row pt-3">
-      <div className="col-2"></div>
-      <div className="alert alert-warning col-8">
-        <p className="lead">
-          Activated !!!
-        </p>
-      </div>
-      <div className="col-2"></div>
-    </div>
-  );
-}
-
-function Failed(props) {
-  if (!props.fail) {
-    return null;
-  } else {
-    return (
-      <div className="row pt-3">
-        <div className="col-2"></div>
-        <div className="alert alert-danger col-8">
-          <p className="lead">
-            Request failed!!
-          </p>
-        </div>
-        <div className="col-2"></div>
-      </div>
-    )
-  }
-}
-
 function DoorState(props) {
   return (
     <div className="row pt-3">
@@ -56,14 +22,22 @@ function Title(props) {
   );
 }
 
-const url = 'https://url/';
+function Button(props) {
+    return (
+      <button type="submit" className={'btn btn-lg ' + props.style}>
+        Activate
+      </button>
+    )
+}
+
+const url = 'https:///';
 var reReq;
 
 class App extends Component {
 
   constructor(props) {
     super(props);
-    this.state = { activated: false, password: '' }
+    this.state = { activated: false, password: '', btnStyle: 'btn-info' }
     this.passwordChanged = this.passwordChanged.bind(this);
     this.activate = this.activate.bind(this);
   }
@@ -83,12 +57,8 @@ class App extends Component {
                 className="form-control text-center"/>
             </label>
           </div>
-          <button type="submit" className="btn btn-lg btn-info">
-            Activate
-          </button>
+          <Button style={this.state.btnStyle} />
         </form>
-        <Activated act={this.state.activated} />
-        <Failed fail={this.state.failed} />
         <DoorState kind={this.state.kind} message={this.state.message} />
       </div>
     );
@@ -116,21 +86,24 @@ class App extends Component {
               this.result(false);
             }
           })
-        });
+        }).catch(e => this.result(false));
       } else {
         this.result(false);
       }
-    });
+    }).catch(e => this.result(false));
   }
 
   result(success) {
+    let s = 'btn-danger';
     if (success) {
-      this.setState({ activated: true });
-      setTimeout(() => this.setState({ activated: false}), 3000);
-    } else {
-      this.setState({ failed: true });
-      setTimeout(() => this.setState({ failed: false}), 1000);
+      s = 'btn-success';
     }
+    this.setState({
+      btnStyle: s
+    });
+    setTimeout(() => this.setState({
+      btnStyle: 'btn-info'
+    }), 2000);
   }
 
   passwordChanged(event) {
