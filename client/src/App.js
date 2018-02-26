@@ -56,7 +56,8 @@ function Title(props) {
   );
 }
 
-const url = 'https://202.78.140.206/';
+const url = 'https://url/';
+var reReq;
 
 class App extends Component {
 
@@ -95,12 +96,12 @@ class App extends Component {
 
   activate(event) {
     event.preventDefault();
-    // request nonce from server
+    reReq = setInterval(() => this.doorState(), 500);
+    setTimeout(() => clearInterval(reReq), 25000);
     fetch(url + 'nonce').then(nonceRes => {
       if (nonceRes.ok) {
         nonceRes.json().then(body => {
           const hash = SHA3(this.state.password + body.nonce).toString();
-          console.log(hash);
           const respose = { key: hash };
           fetch(url + 'door', {
             method: 'POST',
@@ -140,7 +141,6 @@ class App extends Component {
 
   doorState() {
     fetch(url + 'state').then(res => {
-      console.log(res);
       if (res.ok) {
         res.json().then(data => {
           switch (data.state) {
