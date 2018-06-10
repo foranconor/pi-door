@@ -22,14 +22,6 @@ function Title(props) {
   );
 }
 
-function Button(props) {
-    return (
-      <button type="submit" className={'btn btn-lg ' + props.style}>
-        Activate
-      </button>
-    )
-}
-
 const url = 'https:///';
 var reReq;
 
@@ -37,7 +29,8 @@ class App extends Component {
 
   constructor(props) {
     super(props);
-    this.state = { activated: false, password: '', btnStyle: 'btn-info' }
+    this.state = { activated: false, password: '', timer: 0, btnStyle: 'btn-info' }
+    this.timerChanged = this.timerChanged.bind(this);
     this.passwordChanged = this.passwordChanged.bind(this);
     this.activate = this.activate.bind(this);
   }
@@ -46,25 +39,44 @@ class App extends Component {
     return (
       <div className="container text-center">
         <Title />
-        <form onSubmit={this.activate}>
-          <div className="form-group">
-            <label>
-              Password
-              <input
-                type="password"
-                value={this.state.password}
-                onChange={this.passwordChanged}
-                className="form-control text-center"/>
-            </label>
-          </div>
-          <Button style={this.state.btnStyle} />
-        </form>
+        <div className="form-group">
+          <label>
+            Password
+            <input
+              type="password"
+              value={this.state.password}
+              onChange={this.passwordChanged}
+              className="form-control text-center"/>
+          </label>
+        </div>
+        <div className="form-group">
+          <label>
+            Timer
+            <input
+              type="number"
+              value={this.state.timer}
+              onChange={this.timerChanged}
+              className="form-control text-center" />
+          </label>
+        </div>
+        <div className="btn-group">
+          <button
+            onClick={(e) => this.activate(e, 0)}
+            className={'btn btn-lg ' + this.state.btnStyle}>
+            Now
+          </button>
+          <button
+            onClick={(e) => this.activate(e, this.state.timer)}
+            className={'btn btn-lg ' + this.state.btnStyle}>
+            Then
+          </button>
+        </div>
         <DoorState kind={this.state.kind} message={this.state.message} />
       </div>
     );
   }
 
-  activate(event) {
+  activate(event, time) {
     event.preventDefault();
     reReq = setInterval(() => this.doorState(), 500);
     setTimeout(() => clearInterval(reReq), 25000);
@@ -72,7 +84,7 @@ class App extends Component {
       if (nonceRes.ok) {
         nonceRes.json().then(body => {
           const hash = SHA3(this.state.password + body.nonce).toString();
-          const respose = { key: hash };
+          const respose = { key: hash, timer: time };
           fetch(url + 'door', {
             method: 'POST',
             body: JSON.stringify(respose),
@@ -107,9 +119,15 @@ class App extends Component {
   }
 
   passwordChanged(event) {
-    const p = { password: event.target.value};
+    const p = { password: event.target.value };
     this.setState(p);
     localStorage.pwd = JSON.stringify(p);
+  }
+
+  timerChanged(event) {
+    const t = { timer: event.target.value };
+    this.setState(t);
+    localStorage.timer = JSON.stringify(t);
   }
 
   doorState() {
@@ -159,12 +177,13 @@ class App extends Component {
 
   componentDidMount() {
     let p;
-    try {
-      p = JSON.parse(localStorage.pwd);
-    } catch (e) {
-      p = '';
-    }
+    let t;
+    try { p = JSON.parse(localStorage.pwd); }
+    catch (e) { p = ''; }
+    try { t = JSON.parse(localStorage.timer); }
+    catch (e) { t = 0; }
     this.setState({ password: p.password });
+    this.setState({ timer: t.timer });
     this.doorState();
   }
 }
