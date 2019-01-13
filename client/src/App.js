@@ -22,7 +22,7 @@ function Title(props) {
   );
 }
 
-const url = 'https:///';
+const url = 'https://202.78.140.206/';
 var reReq;
 
 class App extends Component {

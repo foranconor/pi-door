@@ -10,7 +10,7 @@ const winston = require('winston');
 const pin = 40;
 const openPin = 37;
 const closePin = 38;
-const key = "superSecretKey";
+const key = "IlovemyBaby";
 const ttl = 500;
 const push = 500;
 let table = {};
@@ -20,6 +20,12 @@ const logger = winston.createLogger({
   transports: [
     new winston.transports.Console(),
     new winston.transports.File({ filename: 'door.log' })
+  ]
+});
+
+const sink = winston.createLogger({
+  transports: [
+    new winston.transports.File({ filename: 'data.log' })
   ]
 });
 
@@ -82,6 +88,12 @@ app.post('/door', (req, res) => {
   } else {
     res.status(420).send();
   }
+});
+
+app.post('/data', (req, res) => {
+  const b = req.body;
+  sink.info(JSON.stringify(b));
+  res.sendStatus(200).send();
 });
 
 app.get('*', (req, res) => {
