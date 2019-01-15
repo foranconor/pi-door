@@ -10,7 +10,7 @@ const winston = require('winston');
 const pin = 40;
 const openPin = 37;
 const closePin = 38;
-const key = "IlovemyBaby";
+const key = "passwordHere";
 const ttl = 500;
 const push = 500;
 let table = {};
@@ -48,10 +48,10 @@ app.get('/state', (req, res) => {
   const open = rpio.read(openPin);
   const closed = rpio.read(closePin);
   let s = '';
-  if (!(open || closed)) s = 'moving';
-  else if (open && closed) s = 'error';
-  else if (open) s = 'open';
-  else if (closed) s = 'closed';
+  if (!(open || closed)) s = 'Moving';
+  else if (open && closed) s = 'Error!!!!';
+  else if (open) s = 'Open';
+  else if (closed) s = 'Closed';
   res.send({ state: s });
 });
 
