@@ -70,6 +70,9 @@ app.post('/lights', (req, res) => {
     } else {
       rpio.write(lights, rpio.LOW);
     } 
+    res.status(200).send();
+  } else {
+    res.sendStatus(420);
   }
 });
 
