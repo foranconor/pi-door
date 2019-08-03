@@ -8,11 +8,14 @@ const winston = require('winston');
 
 
 const pin = 40;
-const openPin = 37;
-const closePin = 38;
+const lights = 12;
+// const openPin = 37;
+// const closePin = 38;
 const key = "passwordHere";
 const ttl = 500;
 const push = 500;
+const lightsTimeout = 10000;
+const doorLightsTimeout = 5000;
 let table = {};
 const app = express();
 
@@ -30,8 +33,9 @@ const sink = winston.createLogger({
 });
 
 rpio.open(pin, rpio.OUTPUT, rpio.LOW);
-rpio.open(openPin, rpio.INPUT, rpio.PULL_DOWN);
-rpio.open(closePin, rpio.INPUT, rpio.PULL_DOWN);
+rpio.open(lights, rpio.OUTPUT, rpio.LOW);
+// rpio.open(openPin, rpio.INPUT, rpio.PULL_DOWN);
+// rpio.open(closePin, rpio.INPUT, rpio.PULL_DOWN);
 
 app.use(bodyParser.json());
 app.use(express.static('Web'));
@@ -44,15 +48,29 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/state', (req, res) => {
-  const open = rpio.read(openPin);
-  const closed = rpio.read(closePin);
-  let s = '';
-  if (!(open || closed)) s = 'Moving';
-  else if (open && closed) s = 'Error!!!!';
-  else if (open) s = 'Open';
-  else if (closed) s = 'Closed';
-  res.send({ state: s });
+// app.get('/state', (req, res) => {
+//   const open = rpio.read(openPin);
+//   const closed = rpio.read(closePin);
+//   let s = '';
+//   if (!(open || closed)) s = 'Moving';
+//   else if (open && closed) s = 'Error!!!!';
+//   else if (open) s = 'Open';
+//   else if (closed) s = 'Closed';
+//   res.send({ state: s });
+// });
+
+app.post('/lights', (req, res) => {
+  const k = req.body.key;
+  if (table.hasOwnProperty(k)) {
+    if (!rpio.read(lights)) {
+      rpio.write(lights, rpio.HIGH);
+      setTimeout(() => {
+        rpio.write(lights, rpio.LOW);
+      }, lightsTimeout);
+    } else {
+      rpio.write(lights, rpio.LOW);
+    } 
+  }
 });
 
 app.get('/nonce', (req, res) => {
@@ -75,10 +93,16 @@ app.post('/door', (req, res) => {
     if (life < ttl) {
       setTimeout(() => {
         if (!rpio.read(pin)) {
+          // push the button
           rpio.write(pin, rpio.HIGH);
           setTimeout(() => {
             rpio.write(pin, rpio.LOW);
           },push);
+          // turn on lights
+          rpio.write(lights, rpio.HIGH);
+          setTimeout(() => {
+            rpio.write(lights, rpio.LOW);
+          }, doorLightsTimeout);
         }
       }, t  * 1000);
       res.status(200).send();

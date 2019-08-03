@@ -4,9 +4,10 @@ const passwordElem = document.getElementById('password');
 const timerElem = document.getElementById('timer');
 const nowElem = document.getElementById('now');
 const thenElem = document.getElementById('then');
-const statusElem = document.getElementById('status');
-const liveElem = document.getElementById('live');
+//const statusElem = document.getElementById('status');
+//const liveElem = document.getElementById('live');
 const errorElem = document.getElementById('error');
+const lightsElem = document.getElementById('lights');
 
 
 const second = 1000;
@@ -42,7 +43,7 @@ nowElem.addEventListener('click', () => {
   let password = passwordElem.value;
   let timer = timerElem.value;
   save(password, timer);
-  getStatus(halfSecond, halfMinute);
+  // getStatus(halfSecond, halfMinute);
   access(0, password);
 });
 
@@ -50,15 +51,21 @@ thenElem.addEventListener('click', () => {
   let password = passwordElem.value;
   let timer = timerElem.value;
   save(password, timer);
-  setTimeout(getStatus, timer * second, halfSecond, halfMinute);
+  // setTimeout(getStatus, timer * second, halfSecond, halfMinute);
   access(timer, password);
 });
 
-liveElem.addEventListener('click', () => {
-  getStatus(second, hour);
+lightsElem.addEventListener('click', () => {
+  let password = passwordElem.value;
+  save(password, timer);
+  lights(password);
 });
 
-// network requests
+// liveElem.addEventListener('click', () => {
+//   getStatus(second, hour);
+// });
+
+// network access request
 const access = (t, p) => {
   setBackground();
   fetch(url + 'nonce').then(nonceRes => {
@@ -81,6 +88,26 @@ const access = (t, p) => {
       denied('Nonce request denied');
     }
   }).catch(e => denied('Nonce request failed'));
+};
+
+const lights = p => {
+  fetch(url + 'nonce').then(nonceRes => {
+    if (nonceRes.ok) {
+      nonceRes.json().then(body => {
+        const hash = CryptoJS.SHA3(p + body.nonce).toString();
+        const response = { key: hash };
+        fetch(url + 'lights', postData(response)).then(authRes => {
+          console.log('ok');  
+        }).catch(e => {
+          console.log(e);
+        })
+      });
+    } else {
+      console.log('nonce req denied');
+    }
+  }).catch(e => {
+    console.log(e);
+  });
 };
 
 const setBackground = () => {
@@ -111,36 +138,39 @@ const denied = (error) => {
   }, 5 * second);
 }
 
-const getStatus = (interval, timeOut) => {
-  if (statusTimer === 0) {
-    statusTimer = setInterval(status, interval);
-    setTimeout(() => {
-      clearInterval(statusTimer);
-      statusTimer = 0;
-    }, timeOut);
-  } 
-}
+// door status request
 
-const status = () => {
-  fetch(url + 'state').then(res => {
-    if (res.ok) {
-      res.json().then(data => {
-        setStatus(data.state);
-      }).catch(e => {
-        console.log(e);
-        setStatus('JSON error');
-      });
-    } else {
-      setStatus('Denied request');
-    }
-  }).catch(e => {
-    setStatus('Failed request');
-  });
-}
+// const getStatus = (interval, timeOut) => {
+//   if (statusTimer === 0) {
+//     statusTimer = setInterval(status, interval);
+//     setTimeout(() => {
+//       clearInterval(statusTimer);
+//       statusTimer = 0;
+//     }, timeOut);
+//   } 
+// }
 
-const setStatus = (status) => {
-    statusElem.innerHTML = status;
-}
+// const status = () => {
+//   fetch(url + 'state').then(res => {
+//     if (res.ok) {
+//       res.json().then(data => {
+//         setStatus(data.state);
+//       }).catch(e => {
+//         console.log(e);
+//         setStatus('JSON error');
+//       });
+//     } else {
+//       setStatus('Denied request');
+//     }
+//   }).catch(e => {
+//     setStatus('Failed request');
+//   });
+// }
 
+// const setStatus = (status) => {
+//     statusElem.innerHTML = status;
+// }
+
+// do the thing
 load();
-status();
+// status();
