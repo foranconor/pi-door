@@ -97,12 +97,13 @@ const lights = p => {
         const hash = CryptoJS.SHA3(p + body.nonce).toString();
         const response = { key: hash };
         fetch(url + 'lights', postData(response)).then(reply => {
-          console.log('ok');
-          if (reply.status === 'on') {
-            document.body.style.backgroundColor = lightsOn;
-          } else {
-            document.body.style.backgroundColor = lightsOff;
-          }          
+          reply.json().then(body => {
+            if (body.status === 'on') {
+              document.body.style.backgroundColor = lightsOn;
+            } else {
+              document.body.style.backgroundColor = lightsOff;
+            }          
+          });           
         }).catch(e => {
           console.log(e);
         })
