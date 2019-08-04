@@ -4,9 +4,6 @@ const passwordElem = document.getElementById('password');
 const timerElem = document.getElementById('timer');
 const nowElem = document.getElementById('now');
 const thenElem = document.getElementById('then');
-//const statusElem = document.getElementById('status');
-//const liveElem = document.getElementById('live');
-const errorElem = document.getElementById('error');
 const lightsElem = document.getElementById('lights');
 
 
@@ -15,6 +12,14 @@ const hour = 60 * 60 * second;
 const halfMinute = 30 * second;
 const halfSecond = second / 2;
 let statusTimer = 0;
+
+// background colours
+const networkError = 'MediumOrchid';
+const networkWait = 'LavenderBlush';
+const doorActive = 'MediumSpringGreen';
+const lightsOn = 'LightGoldenRodYellow';
+const lightsOff = 'LightSteelBlue';
+const accessDenied = 'Tomato';
 
 
 // loading and saving values
@@ -43,7 +48,6 @@ nowElem.addEventListener('click', () => {
   let password = passwordElem.value;
   let timer = timerElem.value;
   save(password, timer);
-  // getStatus(halfSecond, halfMinute);
   access(0, password);
 });
 
@@ -51,7 +55,6 @@ thenElem.addEventListener('click', () => {
   let password = passwordElem.value;
   let timer = timerElem.value;
   save(password, timer);
-  // setTimeout(getStatus, timer * second, halfSecond, halfMinute);
   access(timer, password);
 });
 
@@ -61,13 +64,9 @@ lightsElem.addEventListener('click', () => {
   lights(password);
 });
 
-// liveElem.addEventListener('click', () => {
-//   getStatus(second, hour);
-// });
-
 // network access request
 const access = (t, p) => {
-  setBackground();
+  document.body.style.backgroundColor = networkWait;
   fetch(url + 'nonce').then(nonceRes => {
     if (nonceRes.ok) {
       nonceRes.json().then(body => {
@@ -75,29 +74,35 @@ const access = (t, p) => {
         const response = { key: hash, timer: t };
         fetch(url + 'door', postData(response)).then(authRes => {
           if (authRes.ok) {
-            allowed();
+            document.body.style.backgroundColor = doorActive;  
           } else {
-            denied('Auth request denied');
+            document.body.style.backgroundColor = accessDenied;
           }
+          setTimeout(status, 5000);
         }).catch(e => {
           console.log(e);
-          denied('Auth request failed');
         });
       });
     } else {
-      denied('Nonce request denied');
+      console.log('nonce request failed');
     }
-  }).catch(e => denied('Nonce request failed'));
+  }).catch(e => console.log('nonce request failed'));
 };
 
 const lights = p => {
+  document.body.style.backgroundColor = networkWait;
   fetch(url + 'nonce').then(nonceRes => {
     if (nonceRes.ok) {
       nonceRes.json().then(body => {
         const hash = CryptoJS.SHA3(p + body.nonce).toString();
         const response = { key: hash };
-        fetch(url + 'lights', postData(response)).then(authRes => {
-          console.log('ok');  
+        fetch(url + 'lights', postData(response)).then(reply => {
+          console.log('ok');
+          if (reply.status === 'on') {
+            document.body.style.backgroundColor = lightsOn;
+          } else {
+            document.body.style.backgroundColor = lightsOff;
+          }          
         }).catch(e => {
           console.log(e);
         })
@@ -109,13 +114,6 @@ const lights = p => {
     console.log(e);
   });
 };
-
-const setBackground = () => {
-  document.body.style.backgroundColor = "LightGoldenRodYellow";
-  setTimeout(() => {
-    document.body.style.backgroundColor = "LavenderBlush";
-  }, 5 * second);
-}
   
 const postData = (data) => {
   return {
@@ -125,52 +123,28 @@ const postData = (data) => {
   }
 }
 
-const allowed = () => {
-  document.body.style.backgroundColor = "MediumSpringGreen";
-  console.log('success');
+// lights status request
+const status = () => {
+  fetch(url + 'status').then(res => {
+    if (res.ok) {
+      res.json().then(data => {
+        if (data.status === 'on') {
+          document.body.style.backgroundColor = lightsOn;
+        } else {
+          document.body.style.backgroundColor = lightsOff;
+        }
+      }).catch(e => {
+        console.log(e);
+        setStatus('JSON error');
+      });
+    } else {
+      setStatus('Denied request');
+    }
+  }).catch(e => {
+    setStatus('Failed request');
+  });
 }
-
-const denied = (error) => {
-  document.body.style.backgroundColor = "Tomato";
-  errorElem.innerHTML = error;
-  setTimeout(() => {
-    errorElem.innerHTML = "";
-  }, 5 * second);
-}
-
-// door status request
-
-// const getStatus = (interval, timeOut) => {
-//   if (statusTimer === 0) {
-//     statusTimer = setInterval(status, interval);
-//     setTimeout(() => {
-//       clearInterval(statusTimer);
-//       statusTimer = 0;
-//     }, timeOut);
-//   } 
-// }
-
-// const status = () => {
-//   fetch(url + 'state').then(res => {
-//     if (res.ok) {
-//       res.json().then(data => {
-//         setStatus(data.state);
-//       }).catch(e => {
-//         console.log(e);
-//         setStatus('JSON error');
-//       });
-//     } else {
-//       setStatus('Denied request');
-//     }
-//   }).catch(e => {
-//     setStatus('Failed request');
-//   });
-// }
-
-// const setStatus = (status) => {
-//     statusElem.innerHTML = status;
-// }
 
 // do the thing
 load();
-// status();
+status();

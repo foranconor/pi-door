@@ -14,8 +14,8 @@ const lights = 12;
 const key = "passwordHere";
 const ttl = 500;
 const push = 500;
-const lightsTimeout = 10000;
-const doorLightsTimeout = 5000;
+const lightsTimeout = 2 * 60 * 60 * 1000;
+const doorLightsTimeout = 2 * 60 * 1000;
 let table = {};
 const app = express();
 
@@ -48,29 +48,30 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.get('/state', (req, res) => {
-//   const open = rpio.read(openPin);
-//   const closed = rpio.read(closePin);
-//   let s = '';
-//   if (!(open || closed)) s = 'Moving';
-//   else if (open && closed) s = 'Error!!!!';
-//   else if (open) s = 'Open';
-//   else if (closed) s = 'Closed';
-//   res.send({ state: s });
-// });
+app.get('/status', (req, res) => {
+  const status = rpio.read(lights);
+  if (status) {
+    res.send({ status: 'on' });
+  } else {
+    res.send({ status: 'off' });
+  }
+  
+});
 
 app.post('/lights', (req, res) => {
   const k = req.body.key;
   if (table.hasOwnProperty(k)) {
-    if (!rpio.read(lights)) {
+    const status = rpio.read(lights); 
+    if (!status) {
       rpio.write(lights, rpio.HIGH);
       setTimeout(() => {
         rpio.write(lights, rpio.LOW);
       }, lightsTimeout);
+      res.status(200).send({status : 'on'});
     } else {
       rpio.write(lights, rpio.LOW);
-    } 
-    res.status(200).send();
+      res.status(200).send({status : 'off'});
+    }
   } else {
     res.sendStatus(420);
   }
