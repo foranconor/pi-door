@@ -8,7 +8,7 @@ const winston = require('winston');
 
 
 const pin = 40;
-const lights = 12;
+const lights = 3;
 // const openPin = 37;
 // const closePin = 38;
 const key = "passwordHere";
@@ -17,6 +17,7 @@ const push = 500;
 const lightsTimeout = 2 * 60 * 60 * 1000;
 const doorLightsTimeout = 2 * 60 * 1000;
 let table = {};
+let timeoutID = 0;
 const app = express();
 
 const logger = winston.createLogger({
@@ -64,12 +65,13 @@ app.post('/lights', (req, res) => {
     const status = rpio.read(lights); 
     if (!status) {
       rpio.write(lights, rpio.HIGH);
-      setTimeout(() => {
+      timeoutID = setTimeout(() => {
         rpio.write(lights, rpio.LOW);
       }, lightsTimeout);
       res.status(200).send({status : 'on'});
     } else {
       rpio.write(lights, rpio.LOW);
+      clearTimeout(timeoutID);
       res.status(200).send({status : 'off'});
     }
   } else {
@@ -104,7 +106,8 @@ app.post('/door', (req, res) => {
           },push);
           // turn on lights
           rpio.write(lights, rpio.HIGH);
-          setTimeout(() => {
+          clearTimeout(timeoutID);
+          timeoutID = setTimeout(() => {
             rpio.write(lights, rpio.LOW);
           }, doorLightsTimeout);
         }
